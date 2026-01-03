@@ -5,6 +5,7 @@ import com.banking.BankingManagement.Model.Users;
 import com.banking.BankingManagement.Repository.AccountRepo;
 import com.banking.BankingManagement.Repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,6 +18,9 @@ public class UsersService {
 
     @Autowired
     AccountRepo accountRepo;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public Users createUser(Users user) {
 
@@ -32,6 +36,8 @@ public class UsersService {
         if (user.getPassword() == null || user.getPassword().isBlank()) {
             throw new IllegalArgumentException("Password cannot be empty");
         }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepo.save(user);
     }
