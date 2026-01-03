@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .csrf(customizer -> customizer.disable())
 
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/auth/register", "/auth/login")
+                        .requestMatchers("/api/users", "/api/users/login")
                         .permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(), UsernamePasswordAuthenticationFilter.class);
