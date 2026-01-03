@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -87,5 +88,37 @@ public class UsersController {
             return ResponseEntity.ok(token);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(){
+
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        Users user = usersRepo.findByUsername(username);
+
+        if (user == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("User not found");
+        }
+
+        List<Account> accounts = service.getAllAccForUser(user.getUserId());
+
+        if (accounts.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No account for user");
+        }
+
+        Account account = accounts.get(0);
+
+        Map<String, Object> response = Map.of(
+                "userId", user.getUserId(),
+                "accId", account.getAccId()
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
