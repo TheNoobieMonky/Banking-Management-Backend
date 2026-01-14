@@ -40,6 +40,12 @@ public class UsersController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @GetMapping("/test")
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Controller is working!");
+    }
+
+
 
     @PostMapping
     public ResponseEntity<Users> createUser(@Valid @RequestBody Users user) {

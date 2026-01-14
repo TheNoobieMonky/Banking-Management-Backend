@@ -16,7 +16,6 @@ public class AccountController {
 
     @Autowired
     private AccountService service;
-    private TransactionService transactionService;
 
     @PostMapping
     public ResponseEntity<Account> createAcc( @Valid @RequestBody Account account,

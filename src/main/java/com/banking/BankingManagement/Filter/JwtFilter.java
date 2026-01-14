@@ -31,8 +31,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        if (path.equals("/api/users") || path.equals("/api/users/login")){
+        if (path.equals("/api/users") && method.equals("POST") || path.equals("/api/users/login")){
             filterChain.doFilter(request, response);
             return;
         }
@@ -45,7 +46,12 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")){
 
             jwt = authHeader.substring(7);
-            username = jwtService.extractUsername(jwt);
+            try {
+                username = jwtService.extractUsername(jwt);
+            }
+            catch (Exception e){
+                System.out.println("JWT Error: " + e.getMessage());
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){

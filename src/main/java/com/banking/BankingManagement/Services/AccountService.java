@@ -1,5 +1,6 @@
 package com.banking.BankingManagement.Services;
 
+import com.banking.BankingManagement.Config.SecurityUtils;
 import com.banking.BankingManagement.Model.Account;
 import com.banking.BankingManagement.Model.Transaction;
 import com.banking.BankingManagement.Model.Users;
@@ -7,9 +8,11 @@ import com.banking.BankingManagement.Repository.TransactionRepo;
 import com.banking.BankingManagement.Repository.AccountRepo;
 import com.banking.BankingManagement.Repository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class AccountService {
@@ -25,6 +28,13 @@ public class AccountService {
         return "ACC" + (int)(Math.random() * 100000000);
     }
 
+    private void checkAccountOwnership(Account account) {
+        String currentUsername = SecurityUtils.getCurrentUsername();
+        if (!account.getUsers().getUsername().equals(currentUsername)) {
+            throw new AccessDeniedException("You don't have permission to access this account");
+        }
+    }
+
     public Account createAcc(Account account, Long userId) {
 
         Users user;
@@ -32,6 +42,13 @@ public class AccountService {
         if (userId != null) {
             user = usersRepo.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+            String currentUsername = SecurityUtils.getCurrentUsername();
+
+            if (!user.getUsername().equals(currentUsername)) {
+                throw new AccessDeniedException("You can only create accounts for yourself");
+            }
+
         } else if (account.getUsers() != null) {
             user = usersRepo.save(account.getUsers());
         } else {
@@ -55,7 +72,12 @@ public class AccountService {
     }
 
     public Account getAccById(Long id) {
-        return accRepo.findById(id).orElse(null);
+        Account account = accRepo.findById(id).orElse(null);
+
+        if (account != null){
+            checkAccountOwnership(account);
+        }
+        return account;
     }
 
     public Account deposit(Long id, double amount) {
@@ -64,6 +86,8 @@ public class AccountService {
         if (acc == null){
             return null;
         }
+        checkAccountOwnership(acc
+        );
         acc.setBalance(acc.getBalance() + amount);
         accRepo.save(acc);
 
@@ -84,6 +108,8 @@ public class AccountService {
         if (acc == null || acc.getBalance() < amount){
             return null;
         }
+        checkAccountOwnership(acc);
+
         acc.setBalance(acc.getBalance() - amount);
         accRepo.save(acc);
 
@@ -102,6 +128,7 @@ public class AccountService {
         Account acc = getAccById(id);
 
         if (acc != null){
+            checkAccountOwnership(acc);
             return acc.getBalance();
         }
         return null;
@@ -109,8 +136,17 @@ public class AccountService {
 
     public void deleteAcc(Long id) {
         if (accRepo.existsById(id)){
-            accRepo.deleteById(id);
+            Account account = accRepo.findById(id).orElse(null);
 
+            if (account != null){
+                checkAccountOwnership(account);
+
+                String accNumber = account.getAccNumber();
+                List<Transaction> transactions = transactionRepo.findByAccountAccNumber(accNumber);
+                transactionRepo.deleteAll(transactions);
+
+                accRepo.deleteById(id);
+            }
         }
     }
 }
