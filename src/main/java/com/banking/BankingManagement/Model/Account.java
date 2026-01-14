@@ -98,4 +98,12 @@ public class Account {
     public void setUsers(Users users) {
         this.users = users;
     }
+
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
+    }
 }
